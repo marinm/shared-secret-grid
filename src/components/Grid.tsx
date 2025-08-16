@@ -1,3 +1,5 @@
+import { useState, useCallback } from "react";
+
 function sequence(count: number): number[] {
   const array = [];
 
@@ -11,18 +13,28 @@ function sequence(count: number): number[] {
 type Props = {
   rows: number;
   columns: number;
-  onClick: (i: number) => void;
 };
 
-export default function Grid({ rows, columns, onClick }: Props) {
+export default function Grid({ rows, columns }: Props) {
+  const [selected, setSelected] = useState<Set<number>>(new Set([]));
   const numCells = rows * columns;
+
+  function toggle(i: number): void {
+    if (selected.has(i)) {
+      selected.delete(i);
+    } else {
+      selected.add(i);
+    }
+    setSelected(new Set(selected));
+  }
+
   return (
     <div className={`min-w-2xs max-w-md grid grid-cols-${columns} gap-1`}>
       {sequence(numCells).map((i) => (
         <div
-          className="aspect-square bg-yellow-300 rounded flex justify-center items-center cursor-pointer"
+          className={`aspect-square ${selected.has(i) ? "bg-blue-500" : "bg-yellow-300"} rounded flex justify-center items-center cursor-pointer`}
           key={i}
-          onClick={() => onClick(i)}
+          onClick={() => toggle(i)}
         >
           {i}
         </div>
