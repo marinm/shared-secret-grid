@@ -13,9 +13,10 @@ function sequence(number: number): number[] {
 type Props = {
   rows: number;
   columns: number;
+  onSelectedChange: (numbers: number[]) => void;
 };
 
-export default function Grid({ rows, columns }: Props) {
+export default function Grid({ rows, columns, onSelectedChange }: Props) {
   const [selected, setSelected] = useState<Set<number>>(new Set([]));
   const numCells = rows * columns;
 
@@ -25,7 +26,9 @@ export default function Grid({ rows, columns }: Props) {
     } else {
       selected.add(i);
     }
-    setSelected(new Set(selected));
+    const newSet = new Set(selected);
+    setSelected(newSet);
+    onSelectedChange([...newSet]);
   }
 
   return (
