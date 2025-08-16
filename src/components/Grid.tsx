@@ -1,9 +1,9 @@
 import { useState } from "react";
 
-function sequence(count: number): number[] {
+function sequence(number: number): number[] {
   const array = [];
 
-  for (let i = 0; i < count; i++) {
+  for (let i = 0; i < number; i++) {
     array[i] = i + 1;
   }
 
