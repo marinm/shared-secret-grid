@@ -49,7 +49,7 @@ function App() {
     }
 
     return () => {
-      if (socket.readyState === WebSocket.OPEN) {
+      if (socket.isOpen) {
         socket.close();
       }
     };
@@ -60,12 +60,12 @@ function App() {
   }, [onMessage]);
 
   useEffect(() => {
-    if (socket.readyState === WebSocket.OPEN) {
+    if (socket.isOpen) {
       socket.send({ message: "hello" });
     } else {
       setIsPaired(false);
     }
-  }, [socket.readyState]);
+  }, [socket.isOpen]);
 
   return (
     <>
@@ -77,8 +77,8 @@ function App() {
           onSelectedChange={onSelectedChange}
         />
         <p>
-          {socket.readyState === WebSocket.OPEN ? "Connected" : "Not connected"}
-          , {isPaired ? "Paired" : "Not paired"}
+          {socket.isOpen ? "Connected" : "Not connected"},{" "}
+          {isPaired ? "Paired" : "Not paired"}
         </p>
       </div>
     </>

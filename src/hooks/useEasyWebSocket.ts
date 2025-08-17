@@ -35,7 +35,7 @@ type EventListener = (() => void) | ((event: EasyWebSocketEvent) => void);
 
 export type EasyWebSocket = {
   isOnline: boolean;
-  readyState: null | number;
+  isOpen: boolean;
   error: boolean;
   open: (url: string) => void;
   send: (message: Message) => void;
@@ -49,8 +49,8 @@ type Options = {
 
 export function useEasyWebSocket(options: Options): EasyWebSocket {
   const websocketRef = useRef<null | WebSocket>(null);
-  const [readyState, setReadyState] = useState<number>(WebSocket.CLOSED);
   const [isOnline, setIsOnline] = useState<boolean>(window.navigator.onLine);
+  const [isOpen, setIsOpen] = useState<boolean>(false);
   const [error, setError] = useState<boolean>(false);
   const onEventRef = useRef<EventListener>(() => {});
 
@@ -73,7 +73,7 @@ export function useEasyWebSocket(options: Options): EasyWebSocket {
       const websocket = websocketRef.current;
 
       websocket.onopen = () => {
-        setReadyState(websocket.readyState);
+        setIsOpen(true);
         setError(false);
         console.log("✅ Connected");
         emit({
@@ -96,7 +96,7 @@ export function useEasyWebSocket(options: Options): EasyWebSocket {
       };
 
       websocket.onclose = () => {
-        setReadyState(websocket.readyState);
+        setIsOpen(false);
         console.log("❌ Disconnected");
         emit({
           name: "close",
@@ -110,7 +110,7 @@ export function useEasyWebSocket(options: Options): EasyWebSocket {
         setError(true);
       };
     },
-    [options],
+    [options]
   );
 
   const send = useCallback((message: Message) => {
@@ -184,7 +184,7 @@ export function useEasyWebSocket(options: Options): EasyWebSocket {
 
   return {
     isOnline,
-    readyState,
+    isOpen,
     error,
     open,
     send,
