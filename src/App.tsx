@@ -14,11 +14,7 @@ function App() {
     <>
       <div className="w-full flex flex-col justify-center items-center gap-4">
         <h1>Shared secret grid</h1>
-        <Grid
-          rows={N_ROWS}
-          columns={N_COLS}
-          onSelectedChange={(numbers) => setCode([...numbers])}
-        />
+        <Grid rows={N_ROWS} columns={N_COLS} onSelectedChange={setCode} />
         <Connection code={code} />
       </div>
     </>
