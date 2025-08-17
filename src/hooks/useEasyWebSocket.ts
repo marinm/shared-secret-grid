@@ -21,18 +21,6 @@ function isMessage(message: unknown): message is Message {
   return message !== null && typeof message === "object";
 }
 
-export type EasyWebSocketEvent = {
-  name: "open" | "message" | "close";
-  message: null | Message;
-};
-
-export type EasyWebSocketMessageEvent = {
-  name: "message";
-  message: Message;
-};
-
-type EventListener = (() => void) | ((event: EasyWebSocketEvent) => void);
-
 export type EasyWebSocket = {
   isOnline: boolean;
   isOpen: boolean;
@@ -40,7 +28,7 @@ export type EasyWebSocket = {
   open: (url: string) => void;
   send: (message: Message) => void;
   close: () => void;
-  listen: (callback: EventListener) => void;
+  nextMessage: null | Message;
 };
 
 type Options = {
@@ -52,14 +40,10 @@ export function useEasyWebSocket(options: Options): EasyWebSocket {
   const [isOnline, setIsOnline] = useState<boolean>(window.navigator.onLine);
   const [isOpen, setIsOpen] = useState<boolean>(false);
   const [error, setError] = useState<boolean>(false);
-  const onEventRef = useRef<EventListener>(() => {});
+  const [nextMessage, setNextMessage] = useState<null | Message>(null);
 
   function reasonError(method: string, reason: string) {
     console.log(`ignoring ${method}() because ${reason}`);
-  }
-
-  function emit(event: EasyWebSocketEvent) {
-    onEventRef.current(event);
   }
 
   const open = useCallback(
@@ -76,32 +60,23 @@ export function useEasyWebSocket(options: Options): EasyWebSocket {
         setIsOpen(true);
         setError(false);
         console.log("✅ Connected");
-        emit({
-          name: "open",
-          message: null,
-        });
       };
 
       websocket.onmessage = (event) => {
         const message = parseJSON(event.data);
-        if (!(isMessage(message) && options.valid(message))) {
+        if (isMessage(message) && options.valid(message)) {
+          console.log("✉️ valid message received");
+          setNextMessage(message);
+        } else {
           console.log("🚫 invalid message received");
           return;
         }
-        console.log("✉️ valid message received");
-        emit({
-          name: "message",
-          message: message,
-        });
       };
 
       websocket.onclose = () => {
         setIsOpen(false);
+        setNextMessage(null);
         console.log("❌ Disconnected");
-        emit({
-          name: "close",
-          message: null,
-        });
         websocketRef.current = null;
       };
 
@@ -155,11 +130,6 @@ export function useEasyWebSocket(options: Options): EasyWebSocket {
     reasonError("close", "uncaught readyState");
   }, []);
 
-  function listen(callback: EventListener) {
-    console.log("update onEvent");
-    onEventRef.current = callback;
-  }
-
   useEffect(() => {
     console.log("add online listener");
     const onOnline = () => {
@@ -189,7 +159,7 @@ export function useEasyWebSocket(options: Options): EasyWebSocket {
     open,
     send,
     close,
-    listen,
+    nextMessage,
   };
 }
 

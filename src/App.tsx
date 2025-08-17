@@ -1,7 +1,7 @@
 import "./App.css";
 import { useState, useEffect, useCallback } from "react";
 import { useEasyWebSocket } from "./hooks/useEasyWebSocket";
-import type { EasyWebSocketEvent, Message } from "./hooks/useEasyWebSocket";
+import type { Message } from "./hooks/useEasyWebSocket";
 import Grid from "./components/Grid";
 
 const SERVER_URL = "https://marinm.net/broadcast";
@@ -21,28 +21,11 @@ function App() {
     setCode([...numbers]);
   }
 
-  const onMessage = useCallback(
-    (event: EasyWebSocketEvent) => {
-      console.log(event);
-      if (
-        event.message &&
-        "message" in event.message &&
-        event.message.message === "hello" &&
-        !isPaired
-      ) {
-        setIsPaired(true);
-        socket.send({ message: "hello" });
-      }
-    },
-    [isPaired]
-  );
-
   useEffect(() => {
     if (code.length === 4) {
       const channel = `shared-secret-grid-${code.toSorted().join("-")}`;
       const url = `${SERVER_URL}?channel=${channel}&echo=false`;
       socket.close();
-      socket.listen(onMessage);
       socket.open(url);
     } else {
       socket.close();
@@ -56,8 +39,18 @@ function App() {
   }, [code]);
 
   useEffect(() => {
-    socket.listen(onMessage);
-  }, [onMessage]);
+    if (isPaired || !socket.nextMessage) {
+      return;
+    }
+    if (
+      typeof socket.nextMessage === "string" &&
+      socket.nextMessage === "hello" &&
+      !isPaired
+    ) {
+      setIsPaired(true);
+      socket.send({ message: "hello" });
+    }
+  }, [socket.nextMessage, isPaired]);
 
   useEffect(() => {
     if (socket.isOpen) {
