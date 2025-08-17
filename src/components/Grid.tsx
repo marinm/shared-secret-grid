@@ -35,7 +35,7 @@ export default function Grid({ rows, columns, onSelectedChange }: Props) {
     <div className={`min-w-2xs max-w-md grid grid-cols-${columns} gap-1`}>
       {sequence(numCells).map((i) => (
         <div
-          className={`aspect-square ${selected.has(i) ? "bg-blue-500" : "bg-yellow-300"} rounded flex justify-center items-center cursor-pointer`}
+          className={`aspect-square ${selected.has(i) ? "bg-blue-500" : "bg-yellow-300"} rounded flex justify-center items-center cursor-pointer transition-colors duration-300`}
           key={i}
           onClick={() => toggle(i)}
         >
