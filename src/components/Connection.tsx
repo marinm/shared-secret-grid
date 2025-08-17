@@ -15,13 +15,14 @@ type Props = {
 export default function Connection({ code }: Props) {
   const [isPaired, setIsPaired] = useState(false);
   const socket = useEasyWebSocket({ valid });
+
   useEffect(() => {
     if (isPaired || !socket.nextMessage) {
       return;
     }
     if (
-      typeof socket.nextMessage === "string" &&
-      socket.nextMessage === "hello" &&
+      "message" in socket.nextMessage &&
+      socket.nextMessage.message === "hello" &&
       !isPaired
     ) {
       setIsPaired(true);
