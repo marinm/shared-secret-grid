@@ -39,7 +39,7 @@ function App() {
 
   useEffect(() => {
     if (code.length === 4) {
-      const channel = `shared-secret-grid-${code.join("-")}`;
+      const channel = `shared-secret-grid-${code.toSorted().join("-")}`;
       const url = `${SERVER_URL}?channel=${channel}&echo=false`;
       socket.close();
       socket.listen(onMessage);
