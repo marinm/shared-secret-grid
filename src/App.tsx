@@ -9,7 +9,7 @@ const N_ROWS = 6;
 const N_COLS = 7;
 
 function valid(message: Message): boolean {
-  return true;
+  return !!message;
 }
 
 function onMessage(event: EasyWebSocketEvent): void {
