@@ -1,5 +1,5 @@
 import "./App.css";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useEasyWebSocket } from "./hooks/useEasyWebSocket";
 import type { EasyWebSocketEvent, Message } from "./hooks/useEasyWebSocket";
 import Grid from "./components/Grid";
@@ -12,22 +12,35 @@ function valid(message: Message): boolean {
   return !!message;
 }
 
-function onMessage(event: EasyWebSocketEvent): void {
-  console.log(event);
-}
-
 function App() {
   const socket = useEasyWebSocket({ valid });
   const [code, setCode] = useState<number[]>([]);
+  const [isPaired, setIsPaired] = useState(false);
 
   function onSelectedChange(numbers: number[]) {
     setCode([...numbers]);
   }
 
+  const onMessage = useCallback(
+    (event: EasyWebSocketEvent) => {
+      console.log(event);
+      if (
+        event.message &&
+        "message" in event.message &&
+        event.message.message === "hello" &&
+        !isPaired
+      ) {
+        setIsPaired(true);
+        socket.send({ message: "hello" });
+      }
+    },
+    [isPaired]
+  );
+
   useEffect(() => {
     if (code.length === 4) {
       const channel = `shared-secret-grid-${code.join("-")}`;
-      const url = `${SERVER_URL}?channel=${channel}`;
+      const url = `${SERVER_URL}?channel=${channel}&echo=false`;
       socket.close();
       socket.listen(onMessage);
       socket.open(url);
@@ -36,9 +49,23 @@ function App() {
     }
 
     return () => {
-      socket.close();
+      if (socket.readyState === WebSocket.OPEN) {
+        socket.close();
+      }
     };
   }, [code]);
+
+  useEffect(() => {
+    socket.listen(onMessage);
+  }, [onMessage]);
+
+  useEffect(() => {
+    if (socket.readyState === WebSocket.OPEN) {
+      socket.send({ message: "hello" });
+    } else {
+      setIsPaired(false);
+    }
+  }, [socket.readyState]);
 
   return (
     <>
@@ -51,6 +78,7 @@ function App() {
         />
         <p>
           {socket.readyState === WebSocket.OPEN ? "Connected" : "Not connected"}
+          , {isPaired ? "Paired" : "Not paired"}
         </p>
       </div>
     </>
