@@ -54,10 +54,12 @@ export default function Connection({ code }: Props) {
       }
     };
   }, [code]);
-  return (
-    <p>
-      {socket.isOpen ? "Connected" : "Not connected"},{" "}
-      {isPaired ? "Paired" : "Not paired"}
-    </p>
-  );
+
+  const statusText = socket.isOpen
+    ? isPaired
+      ? "Paired"
+      : "Waiting..."
+    : "Not connected";
+
+  return <p>{statusText}</p>;
 }
