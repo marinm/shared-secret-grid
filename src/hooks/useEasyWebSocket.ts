@@ -17,6 +17,8 @@ import { useCallback, useEffect, useRef, useState } from "react";
 // Allow only non-null objects.
 export type Message = NonNullable<object>;
 
+const CONNECTION_MESSAGE = "hello";
+
 function isMessage(message: unknown): message is Message {
   return message !== null && typeof message === "object";
 }
@@ -29,13 +31,16 @@ export type EasyWebSocket = {
   send: (message: Message) => void;
   close: () => void;
   nextMessage: null | Message;
+
+  isReadyToConnect(): boolean;
+  initializeConnection(): void;
 };
 
 type Options = {
   valid: (message: Message) => boolean;
 };
 
-export function useEasyWebSocket(options: Options): EasyWebSocket {
+export function useWebSocket(options: Options): EasyWebSocket {
   const websocketRef = useRef<null | WebSocket>(null);
   const [isOnline, setIsOnline] = useState<boolean>(window.navigator.onLine);
   const [isOpen, setIsOpen] = useState<boolean>(false);
@@ -130,6 +135,20 @@ export function useEasyWebSocket(options: Options): EasyWebSocket {
     reasonError("close", "uncaught readyState");
   }, []);
 
+  const isReadyToConnect = useCallback(() => {
+    return (
+      !!nextMessage &&
+      "message" in nextMessage &&
+      nextMessage.message === CONNECTION_MESSAGE
+    );
+  }, [nextMessage]);
+
+  const initializeConnection = useCallback(() => {
+    if (isReadyToConnect()) {
+      send({ message: CONNECTION_MESSAGE });
+    }
+  }, [isReadyToConnect, send]);
+
   useEffect(() => {
     console.log("add online listener");
     const onOnline = () => {
@@ -160,13 +179,16 @@ export function useEasyWebSocket(options: Options): EasyWebSocket {
     send,
     close,
     nextMessage,
+    isReadyToConnect,
+    initializeConnection,
   };
 }
 
 function parseJSON(message: string): unknown {
   try {
     return JSON.parse(message);
-  } catch (e) {}
-
-  return null;
+  } catch (e) {
+    console.error(e);
+    return null;
+  }
 }

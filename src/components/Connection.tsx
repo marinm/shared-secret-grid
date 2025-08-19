@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
-import { useEasyWebSocket } from "../hooks/useEasyWebSocket";
-import type { Message } from "../hooks/useEasyWebSocket";
+import { useWebSocket } from "../hooks/useEasyWebSocket";
+import type { EasyWebSocket, Message } from "../hooks/useEasyWebSocket";
 
 const SERVER_URL = "https://marinm.net/broadcast";
 
@@ -14,21 +14,17 @@ type Props = {
 
 export default function Connection({ code }: Props) {
   const [isPaired, setIsPaired] = useState(false);
-  const socket = useEasyWebSocket({ valid });
+  const socket = useWebSocket({ valid });
 
   useEffect(() => {
     if (isPaired || !socket.nextMessage) {
       return;
     }
-    if (
-      "message" in socket.nextMessage &&
-      socket.nextMessage.message === "hello" &&
-      !isPaired
-    ) {
+    if (doesSocketHaveConnectionMessage(socket) && !isPaired) {
       setIsPaired(true);
       socket.send({ message: "hello" });
     }
-  }, [socket.nextMessage, isPaired]);
+  }, [socket.nextMessage, isPaired, setIsPaired, socket.send, socket]);
 
   useEffect(() => {
     if (socket.isOpen) {
@@ -36,12 +32,11 @@ export default function Connection({ code }: Props) {
     } else {
       setIsPaired(false);
     }
-  }, [socket.isOpen]);
+  }, [socket, socket.isOpen]);
 
   useEffect(() => {
     if (code.length === 4) {
-      const channel = `shared-secret-grid-${code.toSorted().join("-")}`;
-      const url = `${SERVER_URL}?channel=${channel}&echo=false`;
+      const url = getServerUrl(code);
       socket.close();
       socket.open(url);
     } else {
@@ -53,13 +48,38 @@ export default function Connection({ code }: Props) {
         socket.close();
       }
     };
-  }, [code]);
+  }, [code, socket]);
 
-  const statusText = socket.isOpen
-    ? isPaired
-      ? "Paired"
-      : "Waiting..."
-    : "Not connected";
+  const statusText = getStatusText(isPaired, socket.isOpen);
 
   return <p>{statusText}</p>;
+}
+
+function getStatusText(isPaired: boolean, isOpen: boolean) {
+  if (!isOpen) {
+    return "Not connected";
+  }
+  if (isPaired) {
+    return "Paired";
+  }
+  return "Waiting...";
+}
+
+function getServerUrl(code: number[]) {
+  const channel = getChannelName(code);
+  return `${SERVER_URL}?channel=${channel}&echo=false`;
+}
+
+function getChannelName(code: number[]) {
+  const formattedCode = code.toSorted().join("-");
+
+  return `shared-secret-grid-${formattedCode}`;
+}
+
+function doesSocketHaveConnectionMessage(socket: EasyWebSocket) {
+  return (
+    socket.nextMessage &&
+    "message" in socket.nextMessage &&
+    socket.nextMessage.message === "hello"
+  );
 }
