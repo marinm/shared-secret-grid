@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useWebSocket } from "../hooks/useEasyWebSocket";
 import type { EasyWebSocket, Message } from "../hooks/useEasyWebSocket";
 
-const SERVER_URL = "https://marinm.net/broadcast";
+const SERVER_URL = "https://broadcast.marinm.net/";
 
 function valid(message: Message): boolean {
   return !!message;
